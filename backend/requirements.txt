@@ -1,0 +1,7 @@
+Flask
+flask-security-too
+flask-cors
+Flask-SQLAlchemy
+Flask-Caching
+redis
+celery
