@@ -1,3 +1,6 @@
 .vscode
 mad2env
 frontend/node_modules
+backend/static/books
+backend/static/covers
+__pycahe__
