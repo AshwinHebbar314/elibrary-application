@@ -29,8 +29,8 @@ import store from '@/store';
                         <router-link class="nav-link" to="/admin/reviews">Book Reviews</router-link>
                     </li>
                 </ul>
-                <button @click="exportCSVUser" class="btn btn-outline-warning mx-2">Export User Data</button>
-                <button @click="exportCSVBooks" class="btn btn-outline-warning mx-2">Export Books Data</button>
+                <button @click="exportCSVUser" class="btn btn-outline-dark mx-2">Export User Data</button>
+                <button @click="exportCSVBooks" class="btn btn-outline-dark mx-2">Export Books Data</button>
                 <button class="btn btn-danger mx-2" @click="signout">Signout</button>
             </div>
         </div>

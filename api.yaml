@@ -1,0 +1,1075 @@
+openapi: 3.0.0
+info:
+  title: eLIB API
+  description: API for managing books, users, and library operations
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:5000/
+
+components:
+  securitySchemes:
+    TokenAuth:
+      type: apiKey
+      in: header
+      name: token
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        fname:
+          type: string
+        lname:  
+          type: string
+        uname:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        active_requests_count:
+          type: integer
+        last_active:
+          type: string
+          format: date-time
+      required:
+        - fname
+        - lname
+        - uname
+        - email
+        - password
+    Book:
+      type: object 
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        cover_path:
+          type: string
+        date_added:
+          type: string
+          format: date-time
+        section_id:
+          type: integer
+        content_path:
+          type: string
+        publication_date:
+          type: string
+          format: date-time
+        last_issued:
+          type: string
+          format: date-time
+        author:
+          type: string
+        author_fname:
+          type: string
+        author_lname:
+          type: string
+        section:
+          type: string
+      required:
+        - title
+        - author_fname
+        - section_id
+    BookRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+        book_id:
+          type: integer
+        user_id:
+          type: integer
+        request_date:
+          type: string
+          format: date-time
+        request_duration:
+          type: integer
+        request_status:
+          type: string
+          enum: [pending, approved, rejected, returned]
+      required:
+        - book_id
+        - user_id
+        - request_duration
+    BookIssue:
+      type: object
+      properties:
+        id:
+          type: integer
+        book_request_id:
+          type: integer
+        book_id:
+          type: integer
+        user_id:
+          type: integer
+        date_issues:
+          type: string
+          format: date-time
+        issue_expiry_date:
+          type: string
+          format: date-time
+        return_date:
+          type: string
+          format: date-time
+        issue_status:
+          type: string
+          enum: [issued, returned]
+      required:
+        - book_request_id
+        - book_id
+        - user_id
+    Review:
+      type: object
+      properties:
+        id:
+          type: integer
+        book_id:
+          type: integer
+        user_id:
+          type: integer
+        review_date:
+          type: string
+          format: date-time
+        review_title:
+          type: string
+        review_desc:
+          type: string
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+      required:
+        - book_id
+        - user_id
+        - review_title
+        - review_desc
+        - rating
+
+paths:
+  /signup:
+    post:
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:    
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:    
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    
+  /signin:
+    post:
+      summary: User login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                uname:
+                  type: string
+                pass:
+                  type: string
+              required:
+                - uname
+                - pass
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  token:
+                    type: string
+                  roles:
+                    type: array
+                    items:
+                      type: string
+                  name:
+                    type: string
+                  id:
+                    type: integer
+        '401':
+          description: Invalid credentials
+        '404':
+          description: User not found
+          
+  /signout:
+    post:
+      summary: User logout
+      security:
+        - TokenAuth: []
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                    
+  /admin/section/create:
+    post:
+      summary: Create a new section
+      security:
+        - TokenAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sectionName:
+                  type: string
+                sectionDesc:
+                  type: string
+              required:
+                - sectionName
+      responses:
+        '201':
+          description: Section created successfully
+        '400':
+          description: Invalid section name
+          
+  /admin/section/getList:
+    get:
+      summary: Get list of sections
+      security:
+        - TokenAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:    
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id: 
+                      type: integer
+                    name:
+                      type: string
+                    description:
+                      type: string
+                    date_created:
+                      type: string
+                      format: date-time
+                      
+  /admin/section/delete/{sectionID}:
+    delete:
+      summary: Delete a section
+      security:
+        - TokenAuth: []
+      parameters:
+        - in: path
+          name: sectionID
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Section deleted successfully
+        '404':
+          description: Section not found
+          
+  /admin/section/update/{sectionID}:
+    put:
+      summary: Update a section
+      security:
+        - TokenAuth: []
+      parameters:
+        - in: path
+          name: sectionID
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sectionName:
+                  type: string
+                sectionDesc:
+                  type: string
+              required:
+                - sectionName
+      responses:
+        '200':
+          description: Section updated successfully
+        '400':
+          description: Invalid section name
+        '404':
+          description: Section not found
+          
+  /admin/book/create:
+    post:
+      summary: Create a new book
+      security:
+        - TokenAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                authorFirstName:
+                  type: string
+                authorLastName:
+                  type: string
+                section:
+                  type: integer
+                bookCover:
+                  type: string
+                  format: binary
+                bookFile:
+                  type: string
+                  format: binary
+              required:
+                - title
+                - authorFirstName
+                - section
+                - bookCover
+                - bookFile
+      responses:
+        '201':
+          description: Book created successfully
+        '400':
+          description: Invalid book data
+          
+  /admin/book/getList:
+    get:
+      summary: Get list of books
+      security:
+        - TokenAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Book'
+                  
+  /admin/book/delete/{bookID}:
+    delete:
+      summary: Delete a book
+      security:
+        - TokenAuth: []
+      parameters:
+        - in: path
+          name: bookID
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Book deleted successfully
+        '404':
+          description: Book not found
+          
+  /admin/book/update/{bookID}:
+    put:
+      summary: Update a book
+      security:
+        - TokenAuth: []
+      parameters:
+        - in: path
+          name: bookID
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                authorFirstName:
+                  type: string
+                authorLastName:
+                  type: string
+                section:
+                  type: integer
+                bookCover:
+                  type: string
+                  format: binary
+                bookFile:
+                  type: string
+                  format: binary
+              required:
+                - title
+                - authorFirstName
+      responses:
+        '200':
+          description: Book updated successfully
+        '400':
+          description: Invalid book data
+        '404':
+          description: Book not found
+          
+  /admin/book/request/getList:
+    get:
+      summary: Get list of book requests
+      security:
+        - TokenAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    bookTitle:
+                      type: string
+                    userName:
+                      type: string
+                    request_date:
+                      type: string
+                      format: date-time
+                    request_duration:
+                      type: integer
+                    request_status:
+                      type: string
+                      
+  /admin/book/request/process/{requestID}:
+    post:
+      summary: Process a book request
+      security:
+        - TokenAuth: []
+      parameters:
+        - in: path
+          name: requestID
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [approved, rejected]
+              required:
+                - status
+      responses:
+        '200':
+          description: Request processed successfully
+        '404':
+          description: Request not found
+          
+  /admin/book/issue/getList:
+    get:
+      summary: Get list of issued books
+      security:
+        - TokenAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    bookTitle:
+                      type: string
+                    userName:
+                      type: string
+                    issue_date:
+                      type: string
+                      format: date-time
+                    expiry_date:
+                      type: string
+                      format: date-time
+                    return_date:
+                      type: string
+                      format: date-time
+                    issue_status:
+                      type: string
+                      
+  /admin/getreviews:
+    get:
+      summary: Get all book reviews
+      security:
+        - TokenAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    book_title:
+                      type: string
+                    userName:
+                      type: string
+                    review_date:
+                      type: string
+                      format: date-time
+                    review_title:
+                      type: string
+                    review_desc:
+                      type: string
+                    rating:
+                      type: integer
+                      
+  /admin/dashboard/get_data:
+    get:
+      summary: Get admin dashboard data
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    book_count_by_section:
+                      type: object
+                    top_requested_books:
+                      type: object
+                    top_rated_books:
+                      type: object
+                    total_requests:
+                      type: integer
+                    total_issues:
+                      type: integer
+                    overdue_issues:
+                      type: integer
+                      
+  /user/get/{userID}:
+    get:
+      summary: Get user details
+      security:
+        - TokenAuth: []
+      parameters:
+        - in: path
+          name: userID
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+          
+  /user/update:
+    put:
+      summary: Update user details
+      security:
+        - TokenAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userID:
+                  type: integer
+                fname:
+                  type: string
+                lname:
+                  type: string
+                email:
+                  type: string
+                pass:
+                  type: string
+                passconf:
+                  type: string
+              required:
+                - userID
+                - fname
+                - lname
+                - email
+                - pass
+                - passconf
+      responses:
+        '200':
+          description: User updated successfully
+        '400':
+          description: Invalid user data
+        '404':
+          description: User not found
+          
+  /book/getList:
+    get:
+      summary: Get list of books
+      security:
+        - TokenAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Book'
+
+  /book/get/{bookID}:
+    get:
+      summary: Get book details
+      security:
+        - TokenAuth: []
+      parameters:
+        - in: path
+          name: bookID
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+                properties:
+                  author:
+                    type: string
+                  author_fname:
+                    type: string 
+                  author_lname:
+                    type: string
+                  section:
+                    type: string
+        '404':
+          description: Book not found
+          
+  /book/request:
+    post:
+      summary: Request a book
+      security:
+        - TokenAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                bookID:
+                  type: integer
+                userID:
+                  type: integer
+                time:
+                  type: object
+                  properties:
+                    days:
+                      type: integer
+                    hours:
+                      type: integer
+                    minutes:
+                      type: integer
+              required:
+                - bookID
+                - userID
+                - time
+      responses:
+        '201':
+          description: Request created successfully
+        '400':
+          description: Invalid request data
+        '404':
+          description: Book not found
+          
+  /myrequests:
+    post:
+      summary: Get user's book requests
+      security:
+        - TokenAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userID:
+                  type: integer
+              required:
+                - userID
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    title:
+                      type: string
+                    description:
+                      type: string
+                    request_date:
+                      type: string
+                      format: date-time
+                    request_duration:
+                      type: integer
+                    request_status:
+                      type: string
+                      
+  /mybooks:
+    post:
+      summary: Get user's issued books
+      security:
+        - TokenAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userID:
+                  type: integer
+              required:
+                - userID
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    book_issue_id:
+                      type: integer  
+                    title:
+                      type: string
+                    description:
+                      type: string
+                    cover_path:
+                      type: string
+                    content_path:
+                      type: string
+                    issue_date:
+                      type: string
+                      format: date-time
+                    expiry_date:
+                      type: string
+                      format: date-time
+                    issue_status:
+                      type: string
+                      
+  /book/review/{userID}:
+    post:
+      summary: Review a book
+      security:
+        - TokenAuth: []
+      parameters:
+        - in: path
+          name: userID
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                bookID:
+                  type: integer
+                reviewTitle:
+                  type: string
+                reviewDesc:
+                  type: string
+                reviewScore:
+                  type: integer
+              required:
+                - bookID
+                - reviewTitle
+                - reviewDesc
+                - reviewScore
+      responses:
+        '201':
+          description: Review submitted successfully
+        '400':
+          description: Review already submitted
+        '404':
+          description: Book not found
+          
+  /book/reviews/{bookID}:
+    get:
+      summary: Get book reviews
+      security:
+        - TokenAuth: []
+      parameters:
+        - in: path
+          name: bookID
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    user:
+                      type: string
+                    review_date:
+                      type: string
+                      format: date-time
+                    review_title:
+                      type: string
+                    review_desc:
+                      type: string
+                    rating:
+                      type: integer
+        '404':
+          description: Book not found
+          
+  /book/reviews/user/{userID}:
+    get:
+      summary: Get user's book reviews
+      security:
+        - TokenAuth: []
+      parameters:
+        - in: path
+          name: userID
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    book_title:
+                      type: string
+                    review_date:
+                      type: string
+                      format: date-time
+                    review_title:
+                      type: string
+                    review_desc:
+                      type: string
+                    rating:
+                      type: integer
+                      
+  /book/review/delete/{reviewID}:
+    delete:
+      summary: Delete a book review
+      security:
+        - TokenAuth: []
+      parameters:
+        - in: path
+          name: reviewID
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Review deleted successfully
+        '404':
+          description: Review not found
+          
+  /book/return/{userid}:
+    post:
+      summary: Return an issued book
+      security:
+        - TokenAuth: []
+      parameters:
+        - in: path
+          name: userid
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                bookIssueID:
+                  type: integer
+              required:
+                - bookIssueID
+      responses:
+        '200':
+          description: Book returned successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Book issue not found
+          
+  /export/users:
+    get:
+      summary: Export user data
+      security:
+        - TokenAuth: []
+      parameters:
+        - in: query
+          name: task
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+                    
+  /download/users:
+    get:
+      summary: Download exported user data
+      parameters:
+        - in: query
+          name: task
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful file download
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+                
+  /export/books:
+    get:
+      summary: Export book data  
+      security:
+        - TokenAuth: []
+      parameters:
+        - in: query
+          name: task
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+                    
+  /download/books:
+    get:
+      summary: Download exported book data
+      parameters:
+        - in: query
+          name: task
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful file download
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary

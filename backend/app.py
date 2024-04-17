@@ -62,7 +62,10 @@ celery = celery_init_app(app)
 
 @celery.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
-    sender.add_periodic_task(10, daily_reminder_email.s(), name='Email to send daily reminders')
-    sender.add_periodic_task(10, user_monthly_report.s(), name='Monthly user report')
+    sender.add_periodic_task(crontab(minute="*"), daily_reminder_email.s(), name='Email to send daily reminders')
+    # sender.add_periodic_task(crontab(day_of_month="*"), daily_reminder_email.s(), name='Email to send daily reminders')
+    
+    sender.add_periodic_task(crontab(minute="*"), user_monthly_report.s(), name='Monthly user report')
     # sender.add_periodic_task(10, user_monthly_report.s(), name='Monthly user report')
+    
     sender.add_periodic_task(crontab(minute="*"), auto_return_books.s(), name='Auto return books')

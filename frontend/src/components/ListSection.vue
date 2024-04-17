@@ -26,6 +26,7 @@ import UpdateSectionModal from "./UpdateSectionModal.vue";
                         <td>
                             <button class="btn btn-danger" @click="deleteSection(section.id)">Delete</button>
                         </td>
+                        <!-- {{ section }} -->
                         <td>
                             <UpdateSectionModal :currentSection="section" />
                         </td>
@@ -64,12 +65,13 @@ export default {
                 });
         },
         deleteSection(sectionID) {
-            console.log("Deleting section with id: ", sectionID);
-            fetch(store.getters.BASEURL + "/admin/section/delete" + "/" + sectionID, {
+            console.log("Deleting section with id: ", sectionID)
+            fetch(store.getters.BASEURL + "/admin/section/delete/" + sectionID, {
                 method: "DELETE",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authentication-Token": store.getters.getToken
+                    "Authentication-Token": store.getters.getToken,
+                    'Access-Control-Allow-Origin': "*"
                 },
 
             })
@@ -84,6 +86,9 @@ export default {
                         alert("Error: " + data.error);
                     }
                 })
+                .catch(error => {
+                    console.error("Error: ", error);
+                });
         },
     },
     created() {

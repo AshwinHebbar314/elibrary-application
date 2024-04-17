@@ -149,13 +149,14 @@ def user_monthly_report():
 @shared_task
 def auto_return_books():
     print("Auto returning books")
-    # check if the issue expiry date has crossed current date, if yes, return the book
     book_issues = BookIssue.query.all()
 
     for issue in book_issues:
         if (datetime.datetime.now() > issue.issue_expiry_date) and (issue.issue_status == "issued"):
             issue.issue_status = "returned"
             issue.return_date = datetime.datetime.now()
+            user = User.query.get(issue.user_id)
+            user.active_requests_count -= 1
             db.session.commit()
     return True
 

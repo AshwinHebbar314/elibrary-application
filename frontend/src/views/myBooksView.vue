@@ -21,7 +21,11 @@ import store from '@/store';
                     <button class="btn btn-outline-success me-2" type="submit">Search</button>
                 </form>
                 <div class="d-flex row row-cols-auto justify-content-center align-items-end">
-                    <ClientBookCardIssued v-for="book in books" :key="book.id" :book="book" />
+                    <div v-for="book in books" :key="book.id">
+                        <div v-if="book.issue_status == 'issued'">
+                            <ClientBookCardIssued :book="book" />
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

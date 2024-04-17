@@ -883,6 +883,7 @@ def returnBook(userid):
         bookIssue.issue_status = "returned"
         bookrequest.request_status = "returned"
         bookIssue.return_date = datetime.now()
+        user.active_requests_count -= 1
         db.session.commit()
     else:
         return {"error": "Unauthorized"}, 401

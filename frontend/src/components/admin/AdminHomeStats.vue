@@ -8,7 +8,7 @@ import store from "@/store";
 
     <!-- {{ sectionsPieChartData }} -->
 
-    {{ barChartseries }}
+    <!-- {{ barChartseries }} -->
     <div class="container-fluid d-flex row align-items-center">
         <div class="col">
             <h1>eLib Admin Dashboard</h1>
@@ -25,6 +25,7 @@ import store from "@/store";
         <div class="col">
             <apexchart max-width="600" type="bar" :options="optionRequests"
                 :series="topRequestedBooksBarChartData.counts" />
+
             <apexchart max-width="600" type="bar" :options="optionTopRated" :series="toppRatedBooksBarChartData.rating" />
         </div>
     </div>
